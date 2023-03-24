@@ -2,10 +2,12 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+
+	internal "github.com/aziemp66/golang-chatroom/internal"
 )
 
 func main() {
-	go h.run()
+	go internal.H.Run()
 
 	router := gin.New()
 	router.LoadHTMLFiles("index.html")
@@ -16,8 +18,8 @@ func main() {
 
 	router.GET("/ws/:roomId", func(c *gin.Context) {
 		roomId := c.Param("roomId")
-		serveWs(c.Writer, c.Request, roomId)
+		internal.ServeWs(c.Writer, c.Request, roomId)
 	})
 
-	router.Run("0.0.0.0:8080")
+	router.Run(":3000")
 }
