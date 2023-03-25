@@ -1,31 +1,5 @@
 package internal
 
-type message struct {
-	data []byte
-	room string
-}
-
-type subscription struct {
-	conn *connection
-	room string
-}
-
-// hub maintains the set of active connections and broadcasts messages to the
-// connections.
-type hub struct {
-	// Registered connections.
-	rooms map[string]map[*connection]bool
-
-	// Inbound messages from the connections.
-	broadcast chan message
-
-	// Register requests from the connections.
-	register chan subscription
-
-	// Unregister requests from connections.
-	unregister chan subscription
-}
-
 var H = hub{
 	broadcast:  make(chan message),
 	register:   make(chan subscription),
