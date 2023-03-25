@@ -15,7 +15,7 @@ type (
 		ws *websocket.Conn
 
 		// Buffered channel of outbound messages.
-		send chan []byte
+		send chan MessagePayload
 	}
 
 	//hub maintains the set of active connections and broadcasts messages to the connections.
@@ -39,7 +39,7 @@ type (
 	}
 
 	message struct {
-		data []byte
+		data MessagePayload
 		room string
 	}
 )

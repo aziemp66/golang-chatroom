@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Chat Example</title>
     <script type="text/javascript">
@@ -23,7 +24,8 @@
                 if (!msg.value) {
                     return false;
                 }
-                conn.send(msg.value);
+                data = { user: "blank", message: msg.value };
+                conn.send(JSON.stringify(data));
                 msg.value = "";
                 return false;
             };
@@ -32,12 +34,18 @@
                 const params = window.location.href.split("/");
                 const roomId = params[params.length - 1];
                 conn = new WebSocket("ws://" + document.location.host + "/ws/" + roomId);
+                conn.onopen = function (evt) {
+                    let item = document.createElement("div");
+                    item.innerHTML = "<b>Connection established!</b>";
+                    appendLog(item);
+                };
                 conn.onclose = function (evt) {
                     let item = document.createElement("div");
                     item.innerHTML = "<b>Connection closed.</b>";
                     appendLog(item);
                 };
                 conn.onmessage = function (evt) {
+                    console.log("data:", evt.data);
                     let messages = evt.data.split('\n');
                     for (let i = 0; i < messages.length; i++) {
                         let item = document.createElement("div");
@@ -87,14 +95,15 @@
             width: 100%;
             overflow: hidden;
         }
-
     </style>
 </head>
+
 <body>
-<div id="log"></div>
-<form id="form">
-    <input type="text" id="msg" size="64" autofocus/>
-    <input type="submit" value="Send"/>
-</form>
+    <div id="log"></div>
+    <form id="form">
+        <input type="text" id="msg" size="64" autofocus />
+        <input type="submit" value="Send" />
+    </form>
 </body>
+
 </html>

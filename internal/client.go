@@ -25,22 +25,24 @@ func (s subscription) readPump() {
 	c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		_, msg, err := c.ws.ReadMessage()
+		var readPayload MessagePayload
+
+		err := c.ws.ReadJSON(&readPayload)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Printf("error: %v", err)
+				fmt.Printf("error: %v", err.Error())
 			}
 			break
 		}
-		m := message{msg, s.room}
+		m := message{readPayload, s.room}
 		H.broadcast <- m
 	}
 }
 
 // write writes a message with the given message type and payload.
-func (c *connection) write(mt int, payload []byte) error {
+func (c *connection) write(payload MessagePayload) error {
 	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
-	return c.ws.WriteMessage(mt, payload)
+	return c.ws.WriteJSON(payload)
 }
 
 // writePump pumps messages from the hub to the websocket connection.
@@ -55,14 +57,16 @@ func (s *subscription) writePump() {
 		select {
 		case message, ok := <-c.send:
 			if !ok {
-				c.write(websocket.CloseMessage, []byte{})
+				c.write(MessagePayload{})
 				return
 			}
-			if err := c.write(websocket.TextMessage, message); err != nil {
+			if err := c.write(message); err != nil {
+				log.Fatalf("error: %v", err)
 				return
 			}
 		case <-ticker.C:
-			if err := c.write(websocket.PingMessage, []byte{}); err != nil {
+			if err := c.write(MessagePayload{}); err != nil {
+				log.Fatalf("error: %v", err)
 				return
 			}
 		}
@@ -77,7 +81,7 @@ func ServeWs(w http.ResponseWriter, r *http.Request, roomId string) {
 		log.Println(err.Error())
 		return
 	}
-	c := &connection{send: make(chan []byte, 256), ws: ws}
+	c := &connection{send: make(chan MessagePayload), ws: ws}
 	s := subscription{c, roomId}
 	H.register <- s
 	go s.writePump()
